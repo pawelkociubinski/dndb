@@ -1,44 +1,54 @@
 import http from "node:http";
 import bodyParser from "body-parser";
 import express from "express";
-import socketIO from "socket.io";
 import cors from "cors";
+import { expressMiddleware } from "@apollo/server/express4";
+import { ApolloServer } from "@apollo/server";
+import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import { GraphQLSchema } from "graphql";
+
+interface IConfig {
+  schema: GraphQLSchema;
+}
 
 export class Server {
-  private static instance: Server;
-  app: express.Express;
-  httpServer: http.Server;
-  io: socketIO.Server;
+  private app = express();
+  private httpServer = http.createServer(this.app);
+  private apolloServer: ApolloServer;
 
-  private constructor() {
-    this.app = this.createExpressApp();
-    this.httpServer = this.createHttpServer(this.app);
-    this.io = this.CreateSocketServer(this.httpServer);
+  constructor(private config: IConfig) {
+    this.apolloServer = this.createApolloServer();
   }
 
-  private createExpressApp() {
-    const app = express();
-
-    app.use(cors());
-    app.use(bodyParser.urlencoded({ extended: true }));
-    app.use(bodyParser.json());
-
-    return app;
+  async listen({ port }: { port: number }, onInit: () => void) {
+    await this.apolloServer.start();
+    this.createExpressApp(this.apolloServer);
+    this.httpServer.listen({ port }, async () => {
+      onInit();
+      console.log(`🚀 http://localhost:${port}/graphql 🚀 `);
+    });
   }
 
-  private createHttpServer(app: express.Express) {
-    return http.createServer(app);
+  private createApolloServer() {
+    return new ApolloServer({
+      schema: this.config.schema,
+
+      plugins: [
+        ApolloServerPluginDrainHttpServer({ httpServer: this.httpServer }),
+      ],
+    });
   }
 
-  private CreateSocketServer(httpServer: http.Server) {
-    return new socketIO.Server(httpServer);
-  }
+  private createExpressApp(server: ApolloServer) {
+    this.app.use(
+      cors<cors.CorsRequest>({
+        origin: "*",
+      })
+    );
+    this.app.use(bodyParser.urlencoded({ extended: true }));
+    this.app.use(bodyParser.json());
+    this.app.use("/graphql", expressMiddleware(server));
 
-  static getInstance() {
-    if (!Server.instance) {
-      Server.instance = new Server();
-    }
-
-    return Server.instance;
+    return this.app;
   }
 }

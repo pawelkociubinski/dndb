@@ -1,11 +1,17 @@
 export class ItemModifier {
-  affectedObject: string;
-  affectedValue: string;
-  value: number;
+  constructor(
+    public properties: {
+      affectedObject: string;
+      affectedValue: string;
+      value: number;
+    }
+  ) {}
 
-  constructor(affectedObject: string, affectedValue: string, value: number) {
-    this.affectedObject = affectedObject;
-    this.affectedValue = affectedValue;
-    this.value = value;
+  toDTO() {
+    return {
+      affectedObject: this.properties.affectedObject,
+      affectedValue: this.properties.affectedValue,
+      value: this.properties.value,
+    };
   }
 }

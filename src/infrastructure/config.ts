@@ -6,15 +6,11 @@ import z from "zod";
 dotenv.config();
 
 const ENVSchema = z.object({
-  CI: z.coerce.boolean().default(false),
-  DATABASE_URL: z.string().trim().min(1),
-  DB_NAME: z.string(),
+  JWT_SECRET: z.string(),
   DOMAIN: z.string().default("localhost"),
   NODE_ENV: z
     .enum(["development", "test", "production"])
     .default("development"),
-  npm_package_name: z.string(),
-  npm_package_version: z.string(),
   PORT: z.coerce.number().default(3000),
 });
 
