@@ -1,9 +1,9 @@
 import { UUID } from "crypto";
 import { ActionType, DamageType } from "../../common/resolvers-types.js";
-import { SpellBlueprint } from "../../common/types.js";
 import { SpellDTO } from "../DTOs/SpellDTO.js";
-import { CastSpellEvent, DomainEvent } from "../events/index.js";
+import { DomainEvent } from "../events/index.js";
 import { rollDice } from "../../common/Dice.js";
+import { SpellBlueprint } from "../factories/SpellFactory.js";
 
 interface IEntity {
   readonly id: UUID;
@@ -13,7 +13,7 @@ interface IRootAggregate extends IEntity {}
 
 export class Spell implements IRootAggregate {
   private constructor(
-    private event: DomainEvent,
+    private domainEvent: DomainEvent,
     private spell: {
       id: UUID;
       name: string;
@@ -28,15 +28,17 @@ export class Spell implements IRootAggregate {
   }
 
   castOn(characterName: string) {
-    return this.event.emit(
-      new CastSpellEvent({
-        spellName: this.spell.name,
+    this.domainEvent.emit({
+      aggregateId: this.spell.id,
+      type: "SPELL_CASTED",
+      payload: {
+        sourceName: this.spell.name,
         targetName: characterName,
         type: this.spell.type,
         effect: rollDice(this.spell.effect),
         damageType: this.spell.damageType,
-      })
-    );
+      },
+    });
   }
 
   toDTO(): SpellDTO {
@@ -55,7 +57,7 @@ export class Spell implements IRootAggregate {
       name: spellBlueprint.name,
       effect: spellBlueprint.effect,
       type: spellBlueprint.type,
-      damageType: spellBlueprint.damage_type,
+      damageType: spellBlueprint.damageType,
     });
   }
 }

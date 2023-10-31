@@ -1,16 +1,22 @@
-import { DomainEvent, Event } from "../../domain/events/index.js";
+import { DomainEvent, IEvent } from "../../domain/events/index.js";
 
 export class InMemorEventStoreAdapter implements DomainEvent {
-  events: Event[] = [];
+  events: { [key: string]: Array<(event: IEvent) => void> } = {};
 
-  private push(event: Event) {
-    this.events.push(event);
+  subscribe(eventType: string, listener: (event: IEvent) => void): void {
+    if (!this.events[eventType]) {
+      this.events[eventType] = [];
+    }
+    this.events[eventType].push(listener);
   }
 
-  emit<T extends Event>(event: T) {
-    this.push(event);
-    return event;
-  }
+  emit(event: IEvent): void {
+    const listeners = this.events[event.type];
 
-  getEvent() {}
+    if (!listeners) {
+      return;
+    }
+
+    listeners.forEach((listener) => listener(event));
+  }
 }

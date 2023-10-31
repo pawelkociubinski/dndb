@@ -4,6 +4,7 @@ import { CharacterBlueprint } from "../../common/characterBlueprint.js";
 import { Knex } from "knex";
 import { CharacterDTO } from "../../domain/DTOs/CharacterDTO.js";
 import { v4 as uuidv4 } from "uuid";
+import { SystemError } from "../../common/error.js";
 
 export class CharacterTransaction {
   constructor(private trx: Knex.Transaction) {}
@@ -81,14 +82,18 @@ export class CharacterTransaction {
 
       if (!item) {
         await this.trx.rollback();
-        throw new Error("Item doesn't exists");
+        throw new SystemError({
+          message: "Item with the given name doesn't exist",
+          extraInfo: {
+            itemName,
+          },
+        });
       }
 
       return item;
     } catch (error) {
       await this.trx.rollback();
-      // TODO: Implement error handling logic
-      throw new Error("ROLLBACK");
+      throw new SystemError({ message: "rollback" });
     }
   }
 
@@ -101,8 +106,7 @@ export class CharacterTransaction {
         .ignore();
     } catch (error) {
       await this.trx.rollback();
-      // TODO: Implement error handling logic
-      throw new Error("ROLLBACK");
+      throw new SystemError({ message: "rollback" });
     }
   }
 
@@ -120,8 +124,7 @@ export class CharacterTransaction {
         .into("character_resistance");
     } catch (error) {
       await this.trx.rollback();
-      // TODO: Implement error handling logic
-      throw new Error("ROLLBACK");
+      throw new SystemError({ message: "rollback" });
     }
   }
 
@@ -144,8 +147,7 @@ export class CharacterTransaction {
         .into("item_modifier");
     } catch (error) {
       await this.trx.rollback();
-      // TODO: Implement error handling logic
-      throw new Error("ROLLBACK");
+      throw new SystemError({ message: "rollback" });
     }
   }
 
@@ -159,8 +161,7 @@ export class CharacterTransaction {
         .into("character_item");
     } catch (error) {
       await this.trx.rollback();
-      // TODO: Implement error handling logic
-      throw new Error("ROLLBACK");
+      throw new SystemError({ message: "rollback" });
     }
   }
 
@@ -184,8 +185,7 @@ export class CharacterTransaction {
         .into("character_stats");
     } catch (error) {
       await this.trx.rollback();
-      // TODO: Implement error handling logic
-      throw new Error("ROLLBACK");
+      throw new SystemError({ message: "rollback" });
     }
   }
 
@@ -204,8 +204,7 @@ export class CharacterTransaction {
         .into("character_class");
     } catch (error) {
       await this.trx.rollback();
-      // TODO: Implement error handling logic
-      throw new Error("ROLLBACK");
+      throw new SystemError({ message: "rollback" });
     }
   }
 
@@ -230,8 +229,7 @@ export class CharacterTransaction {
         .into("character");
     } catch (error) {
       await this.trx.rollback();
-      // TODO: Implement error handling logic
-      throw new Error("ROLLBACK");
+      throw new SystemError({ message: "rollback" });
     }
   }
 
@@ -257,8 +255,7 @@ export class CharacterTransaction {
         .where({ id: characterId });
     } catch (error) {
       await this.trx.rollback();
-      // TODO: Implement error handling logic
-      throw new Error("ROLLBACK");
+      throw new SystemError({ message: "rollback" });
     }
   }
 }

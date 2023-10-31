@@ -17,14 +17,8 @@ export class CharacterActionsService {
     const weapon = await equipmentRepository.findByName(weaponName);
     const character = await characterRepository.findByName(targetName);
 
-    const damageEvent = weapon.dealDamageTo(character.name);
-    const event = character.applyEvent(damageEvent);
+    weapon.dealDamageTo(character.name);
     await characterRepository.save(character);
-
-    return {
-      eventType: event.type,
-      character: character.toDTO(),
-    };
   }
 
   async castSpell(spellName: string, targetName: string) {
@@ -33,13 +27,7 @@ export class CharacterActionsService {
     const spell = await spellbookRepository.findByName(spellName);
     const character = await characterRepository.findByName(targetName);
 
-    const castSpellEvent = spell.castOn(character.name);
-    const event = character.applyEvent(castSpellEvent);
+    spell.castOn(character.name);
     await characterRepository.save(character);
-
-    return {
-      eventType: event.type,
-      character: character.toDTO(),
-    };
   }
 }

@@ -7,16 +7,19 @@ interface IDependancies {
   database: IDatabasePort;
 }
 
-export async function loadInitialCharacter(dependancies: IDependancies) {
-  const { database, characterService } = dependancies;
+export async function loadInitialCharacter({
+  database,
+  characterService,
+}: IDependancies) {
+  const { query } = database;
   try {
-    await database.query("character").del();
-    await database.query("character_stats").del();
-    await database.query("character_class").del();
-    await database.query("character_item").del();
-    await database.query("item_modifier").del();
-    await database.query("character_resistance").del();
-    await characterService.createCharacterFromBlueprint(brivBlueprint);
+    await query("character").del();
+    await query("character_stats").del();
+    await query("character_class").del();
+    await query("character_item").del();
+    await query("item_modifier").del();
+    await query("character_resistance").del();
+    await characterService.createFromBlueprint(brivBlueprint);
   } catch (error) {
     console.log("Character creation aborted. Briv already exists");
   }

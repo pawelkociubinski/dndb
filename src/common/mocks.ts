@@ -1,5 +1,4 @@
 import { UUID } from "crypto";
-import { v4 as uuidv4 } from "uuid";
 import {
   CastSpellEvent,
   DamageEvent,
@@ -9,11 +8,17 @@ import { DetailedCharacter } from "../domain/factories/CharacterFactory.js";
 import { Character } from "../domain/aggregates/Character.js";
 import { ActionType, DamageType } from "./resolvers-types.js";
 import { InMemorEventStoreAdapter } from "../infrastructure/adapters/InMemoryEventStoreAdapter.js";
+import { Spell } from "../domain/aggregates/Spell.js";
+import { SpellBlueprint } from "../domain/factories/SpellFactory.js";
+import { rollDice } from "./Dice.js";
 
-export const eventStore = jest.mocked(new InMemorEventStoreAdapter());
+jest.mock("./Dice.js");
+jest.mock("../infrastructure/adapters/InMemoryEventStoreAdapter.js");
+export const rollDiceMocked = jest.mocked(rollDice);
+export const eventStoreMocked = jest.mocked(new InMemorEventStoreAdapter());
 
 const character = {
-  id: uuidv4() as UUID,
+  id: `1234-1234-1234-1234-1234` as UUID,
   name: "John Doe",
   level: 1,
   maxHitPoints: 10,
@@ -36,8 +41,9 @@ export function createCharacter(config?: {
   maxHitPoints?: number;
   currentHitPoints?: number;
   temporaryHitPoints?: number;
+  defenses?: DetailedCharacter["defenses"];
 }) {
-  return Character.create({ ...character, ...config }, eventStore);
+  return Character.create({ ...character, ...config }, eventStoreMocked);
 }
 
 export function attackCharacter(
@@ -52,7 +58,7 @@ export function attackCharacter(
       weaponName: "axe",
       targetName: character.name,
       effect: finalConfing.effect,
-      damageType: DamageType.Force,
+      damageType: DamageType.Slashing,
     })
   );
 }
@@ -70,4 +76,19 @@ export function healCharacter(target: Character, config?: { effect?: number }) {
       damageType: DamageType.None,
     })
   );
+}
+
+const spell = {
+  id: `1234-1234-1234-1234-1234` as UUID,
+  name: "Healing Word",
+  effect: "1d6+3",
+  type: ActionType.Healing,
+  damageType: DamageType.None,
+} satisfies SpellBlueprint;
+
+export function createSpell(config?: { rollDice: number }) {
+  const defaultConfig = { rollDice: 5, ...spell, ...config };
+  rollDiceMocked.mockReturnValue(defaultConfig.rollDice);
+
+  return Spell.create(defaultConfig, eventStoreMocked);
 }

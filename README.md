@@ -1,10 +1,59 @@
+
 ## Setup:
 
+The only things required to run the project are NPM and Node.js.
+
+In the system console:
 - npm install
 - npm run knex:migrate:latest
 - npm run develop
 
+at this point, the Apollo Sandbox website should open up
 
+## ENG
+"Is the code complicated? Yes. Could it have been simpler? Of course! :D
+However, the complexity isn't due to "messiness" or "sloppiness" in writing. Instead, the overhead arises from the architecture chosen, which presents quite a steep learning curve. At the same time, I want to emphasize that DDD (Domain-Driven Design) and hexagonal architecture are ongoing learning processes. My code uses certain patterns, but it is not their perfect reflection.
+
+I acknowledge that my approach might seem like using a cannon to kill a fly. I took this risk to showcase a snippet of my skills. Optimal performance and perfect design decisions weren't the primary objectives when crafting this project! :D
+
+The rationale for my stylistic choices is that project, especially the worlds depicted in them, align very well with domain architecture. It's straightforward to delineate scopes and boundaries within the model. People can intuitively grasp "what belongs to what" without resorting to jargon that, without context, is meaningless (e.g., WorkerFactoryProvider, etc.). In this world, there's simply a hero, a large axe, and an adversary on the receiving end.
+
+### Things to improve or add:
+Event Bus - aggregates should communicate with each other using events
+better error handling and logging
+and more tests ;)
+
+## Adopted design rules:
+### Knex and SQLite
+I use a Query Builder because it gives me more expression possibilities + better type safety and I simply feel internal discomfort mixing one DSL with another.
+I use SQLite because it doesn't require separate setup. I also recommend this [extension](https://marketplace.visualstudio.com/items?itemName=qwtel.sqlite-viewer) to freely preview *.sqlite files locally.
+
+### Aggregates, entities, object values, and domain events
+An aggregate MUST be internally consistent! This means it's the only "entry point" for internal entities and object values.
+It encapsulates all invariants and business requirements.
+Only those methods that comply with business requirements are made public.
+Avoid exposing helper methods in the aggregate just for development purposes!
+An aggregate should emit events during its lifecycle. The aggregate concept fits very well into event-driven architecture and works best with NoSQL databases. (An aggregate is a natural candidate for a document)
+
+### Entities:
+An entity that contains other entities is usually an aggregate.
+Entities and aggregates share many similarities, but there are differences:
+- An aggregate "encloses" other entities and is the only one with the exclusive right to manage their lifecycle.
+- While an aggregate's lifecycle is managed by a repository, an entity's lifecycle is managed by the aggregate.
+
+### Repositories:
+Repositories are responsible for managing the lifecycle of aggregates.
+The concept of "time" or "lifecycle" of objects in DDD is very significant.
+Reading an aggregate, creating an aggregate, modifying an aggregate, all must be done by the repository layer, which has the exclusive right to manage the aggregate.
+
+### Glossary:
+Lifecycle can be understood as the moment of creation, modification, and deletion of an object during the program's duration.
+
+**aggregate** and **entity** are noun-like objects, often real-world things, containing features like the sword object: color, name, statistics, technical condition (functional/damaged). It (aggregate or entity) only exposes those business methods that someone in the real world could perform on it, like "sharpen," "poison," "clean," etc. Aggregates and entities are guardians of business rules.
+
+Application Service defends data integrity, so the aggregate doesn't have to. For example: The Application Service checks if the item even exists, and the Character aggregate only defends business rules, e.g., if the item can be used by a chosen character class. The Application Service coordinates the work of multiple aggregates.
+
+## PL
 Czy kod jest skomplikowany? Tak. Czy dało się prościej? Oczwywiście :D 
 Jednakże skomplikowanie nie wynika z "bałaganu" czy też "niechlujstwa" w pisaniu. 
 Narzut ten wynika tylko i wyłącznie z przyjętej architektury, który jest dość wysokim (i stromym) klifem dodatkowej wymaganej wiedzy, aby moc swobodnie poruszać w obrębie tego rodzaju kodu. Równocześnie zaznaczam, że DDD i architektura hexagonalna to dziura bez dna. Mój kod korzysta z pewnych wzorców, ale nie jest jego idealnym odwzorowaniem.

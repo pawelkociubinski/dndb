@@ -19,6 +19,7 @@ import {
 import { CharacterTransaction } from "../repositories/SaveCharacterTransaction.js";
 import { DamageType, Defense } from "../../common/resolvers-types.js";
 import { rollDice } from "../../common/Dice.js";
+import { SystemError } from "../../common/error.js";
 
 interface IDependancies {
   database: IDatabasePort;
@@ -32,9 +33,9 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
     const { database } = this.dependancies;
 
     try {
-      const characterIds = await database.query
+      const characterIds = await database
+        .query("character")
         .select<{ id: UUID }[]>("id")
-        .from("character")
         .then((characters) => {
           return characters.map((character) => character.id);
         });
@@ -45,8 +46,7 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
         )
       );
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -98,8 +98,7 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
 
       return characterFactory.create(detailedCharacter);
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -151,8 +150,7 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
 
       return characterFactory.create(detailedCharacter);
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -224,14 +222,17 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
         .first();
 
       if (!basicCharacter) {
-        // TODO: Implement error handling logic
-        throw new Error("Character with the given name doesn't exist");
+        throw new SystemError({
+          message: "Character with the given name doesn't exist",
+          extraInfo: {
+            characterName,
+          },
+        });
       }
 
       return basicCharacter;
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -246,14 +247,17 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
         .first();
 
       if (!basicCharacter) {
-        // TODO: Implement error handling logic
-        throw new Error("Character with the given id doesn't exist");
+        throw new SystemError({
+          message: "Character with the given id doesn't exist",
+          extraInfo: {
+            characterId,
+          },
+        });
       }
 
       return basicCharacter;
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -275,8 +279,7 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
 
       return characterClasses;
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -307,8 +310,7 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
 
       return characterItemsWithModifiers;
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -328,8 +330,7 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
 
       return characterDefenses;
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -351,14 +352,17 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
         .first();
 
       if (!characterStats) {
-        // TODO: Implement error handling logic
-        throw new Error("statistics for this character doesn't exist");
+        throw new SystemError({
+          message: "Statistics for this character id doesn't exist",
+          extraInfo: {
+            characterId,
+          },
+        });
       }
 
       return characterStats;
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -373,12 +377,16 @@ export class CharacterSQLRepositoryAdapter implements ICharacterRepositoryPort {
         .first();
 
       if (!_class) {
-        throw new Error("Klasa nie istnieje");
+        throw new SystemError({
+          message: "Class with this name doesn't exist",
+          extraInfo: {
+            className,
+          },
+        });
       }
       return _class;
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 }

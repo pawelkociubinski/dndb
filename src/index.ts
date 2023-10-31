@@ -22,14 +22,6 @@ import { SpellbookSQLRepositoryAdapter } from "./infrastructure/adapters/Spellbo
 import { InMemorEventStoreAdapter } from "./infrastructure/adapters/InMemoryEventStoreAdapter.js";
 import { CharacterActionsService } from "./application/CharacterActionsService.js";
 
-/**
- * Although, the index.ts file is not part of the architecture
- * (is outside the infrastructure/application/domain structure)
- * it imports infrastructure/application/domain code.
- * This is because this file is not part of the DDD model
- * and is only used to inject dependencies.
- */
-
 const database = new SQLDatabaseAdapter();
 const eventStore = new InMemorEventStoreAdapter();
 
@@ -65,6 +57,7 @@ const characterActionsService = new CharacterActionsService({
 
 const characterActionsResolver = new CharacterActionsResolver({
   characterActionsService,
+  eventStore,
 });
 
 const typeDefs = createTypeDefs();
@@ -82,9 +75,9 @@ const schema = makeExecutableSchema({
 const server = new Server({ schema });
 await server.listen({ port: config.PORT }, async () => {
   /**
-   * I could have added this character from the migration layer,
-   * but I didn't know if such a solution would be satisfying.
-   *
+   * I could have added this character from the migration level,
+   * but I wasn't sure if such a solution would be expected.
+   * I would treat the code below as a backdoor for local tests, not as production code.
    */
   void loadInitialCharacter({
     characterService,

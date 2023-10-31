@@ -1,12 +1,4 @@
 import { UUID } from "crypto";
-import {
-  BasicCharacter,
-  CharacterClass,
-  CharacterStats,
-  Class,
-  Item,
-  ItemModifier,
-} from "../../common/knex-types.js";
 import { DamageType, Defense } from "../../common/resolvers-types.js";
 import { Character } from "../aggregates/Character.js";
 import { DomainEvent } from "../events/index.js";

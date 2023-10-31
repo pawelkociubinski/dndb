@@ -1,6 +1,6 @@
 import path from "node:path";
-import { IDatabasePort } from "../../domain/ports/IDatabasePort.js";
 import knex from "knex";
+import { IDatabasePort } from "../../domain/ports/IDatabasePort.js";
 
 export class SQLDatabaseAdapter implements IDatabasePort {
   private db = knex({
@@ -13,5 +13,9 @@ export class SQLDatabaseAdapter implements IDatabasePort {
 
   get query() {
     return this.db;
+  }
+
+  async close(): Promise<void> {
+    return this.db.destroy();
   }
 }

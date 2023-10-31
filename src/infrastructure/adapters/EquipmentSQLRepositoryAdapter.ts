@@ -3,6 +3,7 @@ import { IDatabasePort } from "../../domain/ports/IDatabasePort.js";
 import { IEquipmentRepositoryPort } from "../../domain/ports/IEquipmentRepositoryPort.js";
 import { EquipmentFactory } from "../../domain/factories/EquipmentFactory.js";
 import { ActionType, DamageType } from "../../common/resolvers-types.js";
+import { SystemError } from "../../common/error.js";
 
 interface IDependancies {
   database: IDatabasePort;
@@ -31,13 +32,17 @@ export class EquipmentSQLRepositoryAdapter implements IEquipmentRepositoryPort {
         .first();
 
       if (!equipmentBlueprint) {
-        throw new Error("Equipment by that name doesn't exist");
+        throw new SystemError({
+          message: "Equipment by that name doesn't exist",
+          extraInfo: {
+            equipmentName,
+          },
+        });
       }
 
       return equipmentFactory.create(equipmentBlueprint);
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -63,8 +68,7 @@ export class EquipmentSQLRepositoryAdapter implements IEquipmentRepositoryPort {
 
       return equipment;
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 }

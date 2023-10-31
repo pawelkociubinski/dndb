@@ -10,11 +10,3 @@ export interface EquipmentBlueprint {
   type: ActionType;
   damage_type: DamageType;
 }
-
-export interface SpellBlueprint {
-  id: UUID;
-  name: string;
-  effect: string;
-  type: ActionType;
-  damage_type: DamageType;
-}

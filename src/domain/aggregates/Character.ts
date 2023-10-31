@@ -12,16 +12,7 @@ import {
   DamageType,
   Defense,
 } from "../../common/resolvers-types.js";
-import {
-  Event,
-  DeathEvent,
-  DomainEvent,
-  ReceiveDamageEvent,
-  DamagePayload,
-  NothingHappenEvent,
-  SpellPayload,
-  ReceiveHealingEvent,
-} from "../events/index.js";
+import { DomainEvent, DamagePayload, SpellPayload } from "../events/index.js";
 
 interface IEntity {
   readonly id: UUID;
@@ -31,7 +22,7 @@ interface IRootAggregate extends IEntity {}
 
 export class Character implements IRootAggregate {
   private constructor(
-    private event: DomainEvent,
+    private domainEvent: DomainEvent,
     private character: {
       id: UUID;
       name: string;
@@ -44,7 +35,19 @@ export class Character implements IRootAggregate {
       items: CharacterItem[];
       defenses: CharacterDefense[];
     }
-  ) {}
+  ) {
+    this.domainEvent.subscribe("WEAPON_INFLICTED_DAMAGE", (event) => {
+      this.ReceiveDamage(event.payload);
+    });
+
+    this.domainEvent.subscribe("SPELL_CASTED", (event) => {
+      if (event.payload.type === ActionType.Healing) {
+        return this.heal(event.payload);
+      } else {
+        return this.ReceiveDamage(event.payload);
+      }
+    });
+  }
 
   get isAlive() {
     return this.character.currentHitPoints > 0;
@@ -65,39 +68,23 @@ export class Character implements IRootAggregate {
         this.character.currentHitPoints + spell.effect
       );
 
-      return this.event.emit(
-        new ReceiveHealingEvent({
+      this.domainEvent.emit({
+        aggregateId: this.character.id,
+        type: "CHARACTER_RECEIVED_HEALING",
+        payload: {
           targetName: this.character.name,
-          effect: spell.effect,
-          hitPoints: this.character.currentHitPoints,
-        })
-      );
+          healedPoints: spell.effect,
+          currentHitPoints: this.character.currentHitPoints,
+        },
+      });
     } else {
-      return this.event.emit(
-        new DeathEvent({
+      this.domainEvent.emit({
+        aggregateId: this.character.id,
+        type: "CHARACTER_DIED",
+        payload: {
           characterName: this.character.name,
-        })
-      );
-    }
-  }
-
-  applyEvent<T extends Event>(event: T) {
-    switch (event.type) {
-      case "WEAPON_INFLICTED_DAMAGE": {
-        return this.ReceiveDamage(event.payload);
-      }
-
-      case "SPELL_CASTED": {
-        if (event.payload.type === ActionType.Healing) {
-          return this.heal(event.payload);
-        } else {
-          return this.ReceiveDamage(event.payload);
-        }
-      }
-
-      default: {
-        return this.event.emit(new NothingHappenEvent());
-      }
+        },
+      });
     }
   }
 
@@ -127,7 +114,7 @@ export class Character implements IRootAggregate {
   ): number {
     const [defense, ...restDefenses] = defenses;
 
-    if (_.isEmpty(restDefenses)) {
+    if (!defense) {
       return reduction;
     }
 
@@ -174,28 +161,32 @@ export class Character implements IRootAggregate {
 
       this.calculateHitPointsAfterDamage(finalDamage);
 
-      return this.event.emit(
-        new ReceiveDamageEvent({
+      this.domainEvent.emit({
+        aggregateId: this.character.id,
+        type: "CHARACTER_RECEIVED_DAMAGE",
+        payload: {
           characterName: this.character.name,
           effect: effect,
           damageDealt: finalDamage,
           hitPointsLeft: this.character.currentHitPoints,
-        })
-      );
+        },
+      });
     } else {
-      return this.event.emit(
-        new DeathEvent({
+      this.domainEvent.emit({
+        aggregateId: this.character.id,
+        type: "CHARACTER_DIED",
+        payload: {
           characterName: this.character.name,
-        })
-      );
+        },
+      });
     }
   }
 
   static create(
     detailedCharacter: DetailedCharacter,
-    event: DomainEvent
+    domainEvent: DomainEvent
   ): Character {
-    return new Character(event, {
+    return new Character(domainEvent, {
       id: detailedCharacter.id,
       name: detailedCharacter.name,
       level: detailedCharacter.level,

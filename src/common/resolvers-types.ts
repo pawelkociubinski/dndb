@@ -148,7 +148,7 @@ export enum Defense {
 
 export type Event = {
   __typename?: 'Event';
-  character: Character;
+  message: Scalars['String']['output'];
   status: Scalars['String']['output'];
 };
 
@@ -582,7 +582,7 @@ export interface EmailAddressScalarConfig extends GraphQLScalarTypeConfig<Resolv
 }
 
 export type EventResolvers<ContextType = any, ParentType extends ResolversParentTypes['Event'] = ResolversParentTypes['Event']> = ResolversObject<{
-  character?: Resolver<ResolversTypes['Character'], ParentType, ContextType>;
+  message?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;

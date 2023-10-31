@@ -11,4 +11,5 @@ export interface ICharacterTable {
 
 export interface IDatabasePort {
   readonly query: Knex;
+  close(): Promise<void>;
 }

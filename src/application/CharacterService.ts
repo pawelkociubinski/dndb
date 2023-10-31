@@ -28,7 +28,7 @@ export class CharacterService {
     return charactersDTOs;
   }
 
-  async createCharacterFromBlueprint(characterBlueprint: CharacterBlueprint) {
+  async createFromBlueprint(characterBlueprint: CharacterBlueprint) {
     const { characterRepository } = this.dependancies;
 
     await characterRepository.createByBlueprint(characterBlueprint);

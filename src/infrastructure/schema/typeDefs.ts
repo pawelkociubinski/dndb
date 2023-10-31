@@ -137,7 +137,7 @@ export function createTypeDefs() {
 
   type Event {
     status: String!
-    character: Character!
+    message: String!
   }
 
   type Mutation {

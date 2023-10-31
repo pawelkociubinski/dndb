@@ -6,8 +6,10 @@ import {
 } from "../../common/resolvers-types.js";
 import { GraphQLError } from "graphql";
 import { CharacterActionsService } from "../../application/CharacterActionsService.js";
+import { DomainEvent, IEvent } from "../../domain/events/index.js";
 
 interface IDependancies {
+  eventStore: DomainEvent;
   characterActionsService: CharacterActionsService;
 }
 
@@ -20,34 +22,48 @@ export class CharacterActionsResolver {
 
     this.makeAttackValidation(args);
     try {
-      const result = await characterActionsService.makeAttack(
-        weaponName,
-        targetName
+      /**
+       * I don't like this solution either.
+       * However, this is a simple prototype, so I'm not building an advanced PubSub mechanism or Event Collector here
+       */
+      let characterDied: IEvent | undefined;
+      let weaponInflictedDamage: IEvent | undefined;
+      let characterReceivedDamage: IEvent | undefined;
+
+      this.dependancies.eventStore.subscribe(
+        "WEAPON_INFLICTED_DAMAGE",
+        (event) => {
+          console.log(event);
+          weaponInflictedDamage = event;
+        }
       );
 
-      switch (result.eventType) {
-        case "CHARACTER_RECEIVED_DAMAGE": {
-          return {
-            character: result.character,
-            status: "live",
-          };
+      this.dependancies.eventStore.subscribe(
+        "CHARACTER_RECEIVED_DAMAGE",
+        (event) => {
+          console.log(event);
+          characterReceivedDamage = event;
         }
+      );
 
-        case "CHARACTER_DIED": {
-          return {
-            character: result.character,
-            status: "dead",
-          };
-        }
+      this.dependancies.eventStore.subscribe("CHARACTER_DIED", (event) => {
+        console.log(event);
+        characterDied = event;
+      });
 
-        default: {
-          return {
-            character: result.character,
-            status:
-              "Nothing happened. You know... life is like a box of chocolates - you never know what you're going to get",
-          };
-        }
+      await characterActionsService.makeAttack(weaponName, targetName);
+
+      if (characterDied) {
+        return {
+          status: "dead",
+          message: `${characterDied.payload.characterName} is dead`,
+        };
       }
+
+      return {
+        status: "live",
+        message: `${characterReceivedDamage?.payload.characterName} was attacked. The ${weaponInflictedDamage?.payload.sourceName} hit with a force of ${weaponInflictedDamage?.payload.effect} hit points. ${characterReceivedDamage?.payload.characterName} received ${characterReceivedDamage?.payload.damageDealt} damage. The character had ${characterReceivedDamage?.payload.hitPointsLeft} hit points remaining.`,
+      };
     } catch (error) {
       throw new GraphQLError("wrong args");
     }
@@ -59,42 +75,61 @@ export class CharacterActionsResolver {
 
     this.castSpellValidation(args);
     try {
-      const result = await characterActionsService.castSpell(
-        spellName,
-        targetName
+      let characterDied: IEvent | undefined;
+      let characterReceivedHealing: IEvent | undefined;
+      let characterReceivedDamage: IEvent | undefined;
+      let spellCasted: IEvent | undefined;
+
+      this.dependancies.eventStore.subscribe("SPELL_CASTED", (event) => {
+        console.log(event);
+        spellCasted = event;
+      });
+
+      this.dependancies.eventStore.subscribe(
+        "CHARACTER_RECEIVED_HEALING",
+        (event) => {
+          console.log(event);
+          characterReceivedHealing = event;
+        }
       );
 
-      switch (result.eventType) {
-        case "SPELL_CASTED":
-        case "CHARACTER_RECEIVED_HEALING": {
-          return {
-            character: result.character,
-            status: "live",
-          };
+      this.dependancies.eventStore.subscribe(
+        "CHARACTER_RECEIVED_DAMAGE",
+        (event) => {
+          console.log(event);
+          characterReceivedDamage = event;
         }
+      );
 
-        case "CHARACTER_RECEIVED_DAMAGE": {
-          return {
-            character: result.character,
-            status: "live",
-          };
-        }
+      this.dependancies.eventStore.subscribe("CHARACTER_DIED", (event) => {
+        console.log(event);
+        characterDied = event;
+      });
 
-        case "CHARACTER_DIED": {
-          return {
-            character: result.character,
-            status: "dead",
-          };
-        }
+      await characterActionsService.castSpell(spellName, targetName);
 
-        default: {
-          return {
-            character: result.character,
-            status:
-              "Nothing happened. You know... life is like a box of chocolates - you never know what you're going to get",
-          };
-        }
+      if (characterDied) {
+        return {
+          status: "dead",
+          message: `${characterDied.payload.characterName} is dead`,
+        };
       }
+
+      if (characterReceivedDamage) {
+        return {
+          status: "live",
+          message: `${characterReceivedDamage?.payload.characterName} was attacked. The ${spellCasted?.payload.sourceName} hit with a force of ${spellCasted?.payload.effect} hit points. ${characterReceivedDamage?.payload.characterName} received ${characterReceivedDamage?.payload.damageDealt} damage. The character now has ${characterReceivedDamage?.payload.hitPointsLeft} hit points remaining.`,
+        };
+      }
+
+      if (characterReceivedHealing) {
+        return {
+          status: "live",
+          message: `${characterReceivedHealing?.payload.targetName} was healed. The ${spellCasted?.payload.sourceName} heals with a force of ${spellCasted?.payload.effect} hit points. The character now has ${characterReceivedHealing?.payload.currentHitPoints} hit points.`,
+        };
+      }
+
+      return { status: "live", message: "no effect" };
     } catch (error) {
       throw new GraphQLError("wrong args");
     }

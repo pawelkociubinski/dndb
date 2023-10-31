@@ -3,7 +3,7 @@ import { EquipmentDTO } from "../DTOs/EquipmentDTO.js";
 import { ActionType, DamageType } from "../../common/resolvers-types.js";
 import { EquipmentBlueprint } from "../../common/types.js";
 import { rollDice } from "../../common/Dice.js";
-import { DamageEvent, DomainEvent } from "../events/index.js";
+import { DomainEvent } from "../events/index.js";
 
 interface IEntity {
   readonly id: UUID;
@@ -13,7 +13,7 @@ interface IRootAggregate extends IEntity {}
 
 export class Equipment implements IRootAggregate {
   private constructor(
-    private event: DomainEvent,
+    private domainEvent: DomainEvent,
     private equipment: {
       id: UUID;
       name: string;
@@ -32,14 +32,17 @@ export class Equipment implements IRootAggregate {
   }
 
   dealDamageTo(characterName: string) {
-    return this.event.emit(
-      new DamageEvent({
-        weaponName: this.equipment.name,
+    this.domainEvent.emit({
+      aggregateId: this.equipment.id,
+      type: "WEAPON_INFLICTED_DAMAGE",
+      payload: {
+        sourceName: this.equipment.name,
         targetName: characterName,
+        type: this.equipment.type,
         effect: rollDice(this.equipment.effect),
         damageType: this.equipment.damageType,
-      })
-    );
+      },
+    });
   }
 
   toDTO(): EquipmentDTO {
@@ -54,9 +57,9 @@ export class Equipment implements IRootAggregate {
 
   static create(
     equipmentBlueprint: EquipmentBlueprint,
-    event: DomainEvent
+    domainEvent: DomainEvent
   ): Equipment {
-    return new Equipment(event, {
+    return new Equipment(domainEvent, {
       id: equipmentBlueprint.id,
       name: equipmentBlueprint.name,
       effect: equipmentBlueprint.effect,

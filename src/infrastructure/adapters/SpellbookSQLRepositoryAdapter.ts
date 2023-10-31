@@ -3,6 +3,7 @@ import { IDatabasePort } from "../../domain/ports/IDatabasePort.js";
 import { ActionType, DamageType } from "../../common/resolvers-types.js";
 import { SpellFactory } from "../../domain/factories/SpellFactory.js";
 import { ISpellbookRepositoryPort } from "../../domain/ports/ISpellbookRepositoryPort.js";
+import { SystemError } from "../../common/error.js";
 
 interface IDependancies {
   database: IDatabasePort;
@@ -16,25 +17,25 @@ export class SpellbookSQLRepositoryAdapter implements ISpellbookRepositoryPort {
     const { database, spellFactory } = this.dependancies;
 
     try {
-      const spellBlueprints = await database.query
-        .select<
-          {
-            id: UUID;
-            name: string;
-            effect: string;
-            type: ActionType;
-            damage_type: DamageType;
-          }[]
-        >("*")
-        .from("spell");
-
+      const spellBlueprints = await database.query("spell").select<
+        {
+          id: UUID;
+          name: string;
+          effect: string;
+          type: ActionType;
+          damage_type: DamageType;
+        }[]
+      >("*");
       const spells = spellBlueprints.map((spellBlueprint) =>
-        spellFactory.create(spellBlueprint)
+        spellFactory.create({
+          ...spellBlueprint,
+          damageType: spellBlueprint.damage_type,
+        })
       );
 
       return spells;
     } catch (error) {
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 
@@ -55,12 +56,19 @@ export class SpellbookSQLRepositoryAdapter implements ISpellbookRepositoryPort {
         .first();
 
       if (!spellBlueprint) {
-        throw new Error("Spell by that name doesn't exist");
+        throw new SystemError({
+          message: "Spell by that name doesn't exist",
+          extraInfo: {
+            spellName,
+          },
+        });
       }
-      return spellFactory.create(spellBlueprint);
+      return spellFactory.create({
+        ...spellBlueprint,
+        damageType: spellBlueprint.damage_type,
+      });
     } catch (error) {
-      // TODO: Implement error handling logic
-      throw new Error("SQL error");
+      throw new SystemError({ message: "SQL error" });
     }
   }
 }
