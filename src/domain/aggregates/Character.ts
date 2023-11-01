@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { UUID } from "crypto";
 import { ItemModifier } from "../valueObjects/ItemModifier.js";
-import { CharacterStats, Properties } from "../valueObjects/CharacterStats.js";
+import { CharacterStats } from "../valueObjects/CharacterStats.js";
 import { CharacterClass } from "../valueObjects/CharacterClass.js";
 import { CharacterItem } from "../entity/CharacterItem.js";
 import { CharacterDefense } from "../valueObjects/CharacterDefense.js";

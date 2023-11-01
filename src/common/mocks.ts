@@ -1,9 +1,5 @@
 import { UUID } from "crypto";
-import {
-  CastSpellEvent,
-  DamageEvent,
-  DomainEvent,
-} from "../domain/events/index.js";
+import { DomainEvent } from "../domain/events/index.js";
 import { DetailedCharacter } from "../domain/factories/CharacterFactory.js";
 import { Character } from "../domain/aggregates/Character.js";
 import { ActionType, DamageType } from "./resolvers-types.js";
@@ -13,7 +9,6 @@ import { SpellBlueprint } from "../domain/factories/SpellFactory.js";
 import { rollDice } from "./Dice.js";
 
 jest.mock("./Dice.js");
-jest.mock("../infrastructure/adapters/InMemoryEventStoreAdapter.js");
 export const rollDiceMocked = jest.mocked(rollDice);
 export const eventStoreMocked = jest.mocked(new InMemorEventStoreAdapter());
 
@@ -37,45 +32,56 @@ const character = {
   defenses: [],
 } satisfies DetailedCharacter;
 
-export function createCharacter(config?: {
-  maxHitPoints?: number;
-  currentHitPoints?: number;
-  temporaryHitPoints?: number;
-  defenses?: DetailedCharacter["defenses"];
-}) {
-  return Character.create({ ...character, ...config }, eventStoreMocked);
+export function createCharacter(
+  domainEvent: DomainEvent,
+  config?: {
+    maxHitPoints?: number;
+    currentHitPoints?: number;
+    temporaryHitPoints?: number;
+    defenses?: DetailedCharacter["defenses"];
+  }
+) {
+  return Character.create({ ...character, ...config }, domainEvent);
 }
 
 export function attackCharacter(
-  target: Character,
+  domainEvent: DomainEvent,
+  config?: { effect?: number; damageType?: DamageType }
+) {
+  const defaultConfig = { effect: 5, damageType: DamageType.Bludgeoning };
+  const finalConfing = { ...defaultConfig, ...config };
+
+  domainEvent.emit({
+    aggregateId: `1234-1234-1234-1234-1234` as UUID,
+    type: "WEAPON_INFLICTED_DAMAGE",
+    payload: {
+      sourceName: "Stick of Destiny",
+      targetName: character.name,
+      type: ActionType.Damage,
+      effect: finalConfing.effect,
+      damageType: finalConfing.damageType,
+    },
+  });
+}
+
+export function healCharacter(
+  domainEvent: DomainEvent,
   config?: { effect?: number }
 ) {
   const defaultConfig = { effect: 5 };
   const finalConfing = { ...defaultConfig, ...config };
 
-  target.applyEvent(
-    new DamageEvent({
-      weaponName: "axe",
-      targetName: character.name,
-      effect: finalConfing.effect,
-      damageType: DamageType.Slashing,
-    })
-  );
-}
-
-export function healCharacter(target: Character, config?: { effect?: number }) {
-  const defaultConfig = { effect: 5 };
-  const finalConfing = { ...defaultConfig, ...config };
-
-  target.applyEvent(
-    new CastSpellEvent({
-      spellName: "Healing Word",
+  domainEvent.emit({
+    aggregateId: `1234-1234-1234-1234-1234` as UUID,
+    type: "SPELL_CASTED",
+    payload: {
+      sourceName: "Healing Word",
       targetName: character.name,
       type: ActionType.Healing,
       effect: finalConfing.effect,
       damageType: DamageType.None,
-    })
-  );
+    },
+  });
 }
 
 const spell = {
