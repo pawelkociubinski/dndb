@@ -11,6 +11,7 @@ import { EquipmentBlueprint } from "./types.js";
 import { ICharacterRepositoryPort } from "../domain/ports/ICharacterRespositoryPort.js";
 import { IEquipmentRepositoryPort } from "../domain/ports/IEquipmentRepositoryPort.js";
 import { ISpellbookRepositoryPort } from "../domain/ports/ISpellbookRepositoryPort.js";
+import { CharacterBlueprint } from "./characterBlueprint.js";
 
 jest.mock("./Dice.js");
 export const rollDiceMocked = jest.mocked(rollDice);
@@ -34,6 +35,47 @@ const character = {
   items: [],
   defenses: [],
 } satisfies DetailedCharacter;
+
+export const characterBlueprint = {
+  name: "Briv",
+  level: 5,
+  hitPoints: 25,
+  classes: [
+    {
+      name: "fighter",
+      hitDiceValue: 10,
+      classLevel: 5,
+    },
+  ],
+  stats: {
+    strength: 15,
+    dexterity: 12,
+    constitution: 14,
+    intelligence: 13,
+    wisdom: 10,
+    charisma: 8,
+  },
+  items: [
+    {
+      name: "Ioun Stone of Fortitude",
+      modifier: {
+        affectedObject: "stats",
+        affectedValue: "constitution",
+        value: 2,
+      },
+    },
+  ],
+  defenses: [
+    {
+      type: "fire",
+      defense: "immunity",
+    },
+    {
+      type: "slashing",
+      defense: "resistance",
+    },
+  ],
+} as CharacterBlueprint;
 
 export function createCharacter(
   domainEvent: DomainEvent,
