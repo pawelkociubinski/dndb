@@ -2,7 +2,6 @@ import { Character } from "./Character";
 import {
   createCharacter,
   attackCharacter,
-  eventStoreMocked,
   healCharacter,
 } from "../../common/mocks";
 import { DamageType, Defense } from "../../common/resolvers-types";

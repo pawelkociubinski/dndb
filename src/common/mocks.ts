@@ -3,14 +3,14 @@ import { DomainEvent } from "../domain/events/index.js";
 import { DetailedCharacter } from "../domain/factories/CharacterFactory.js";
 import { Character } from "../domain/aggregates/Character.js";
 import { ActionType, DamageType } from "./resolvers-types.js";
-import { InMemorEventStoreAdapter } from "../infrastructure/adapters/InMemoryEventStoreAdapter.js";
 import { Spell } from "../domain/aggregates/Spell.js";
 import { SpellBlueprint } from "../domain/factories/SpellFactory.js";
 import { rollDice } from "./Dice.js";
+import { Equipment } from "../domain/aggregates/Equipment.js";
+import { EquipmentBlueprint } from "./types.js";
 
 jest.mock("./Dice.js");
 export const rollDiceMocked = jest.mocked(rollDice);
-export const eventStoreMocked = jest.mocked(new InMemorEventStoreAdapter());
 
 const character = {
   id: `1234-1234-1234-1234-1234` as UUID,
@@ -92,9 +92,24 @@ const spell = {
   damageType: DamageType.None,
 } satisfies SpellBlueprint;
 
-export function createSpell(config?: { rollDice: number }) {
+export function createSpell(
+  domainEvent: DomainEvent,
+  config?: { rollDice: number }
+) {
   const defaultConfig = { rollDice: 5, ...spell, ...config };
   rollDiceMocked.mockReturnValue(defaultConfig.rollDice);
 
-  return Spell.create(defaultConfig, eventStoreMocked);
+  return Spell.create(defaultConfig, domainEvent);
+}
+
+export function createEquipment(domainEvent: DomainEvent) {
+  const defaultConfig = {
+    id: `1234-1234-1234-1234-1234` as UUID,
+    name: "Ioun Stone of Fortitude",
+    effect: "1d6+3",
+    type: ActionType.Damage,
+    damage_type: DamageType.Slashing,
+  } satisfies EquipmentBlueprint;
+  rollDiceMocked.mockReturnValue(5);
+  return Equipment.create(defaultConfig, domainEvent);
 }
