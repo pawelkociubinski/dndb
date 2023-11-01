@@ -19,9 +19,8 @@ I acknowledge that my approach might seem like using a cannon to kill a fly. I t
 The rationale for my stylistic choices is that project, especially the worlds depicted in them, align very well with domain architecture. It's straightforward to delineate scopes and boundaries within the model. People can intuitively grasp "what belongs to what" without resorting to jargon that, without context, is meaningless (e.g., WorkerFactoryProvider, etc.). In this world, there's simply a hero, a large axe, and an adversary on the receiving end.
 
 ### Things to improve or add:
-Event Bus - aggregates should communicate with each other using events
-better error handling and logging
-and more tests ;)
+- Logging
+- more tests ;)
 
 ## Adopted design rules:
 ### Knex and SQLite
