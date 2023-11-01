@@ -8,6 +8,9 @@ import { SpellBlueprint } from "../domain/factories/SpellFactory.js";
 import { rollDice } from "./Dice.js";
 import { Equipment } from "../domain/aggregates/Equipment.js";
 import { EquipmentBlueprint } from "./types.js";
+import { ICharacterRepositoryPort } from "../domain/ports/ICharacterRespositoryPort.js";
+import { IEquipmentRepositoryPort } from "../domain/ports/IEquipmentRepositoryPort.js";
+import { ISpellbookRepositoryPort } from "../domain/ports/ISpellbookRepositoryPort.js";
 
 jest.mock("./Dice.js");
 export const rollDiceMocked = jest.mocked(rollDice);
@@ -112,4 +115,20 @@ export function createEquipment(domainEvent: DomainEvent) {
   } satisfies EquipmentBlueprint;
   rollDiceMocked.mockReturnValue(5);
   return Equipment.create(defaultConfig, domainEvent);
+}
+
+export class CharacterRepositoryMock implements ICharacterRepositoryPort {
+  save = jest.fn();
+  findAll = jest.fn();
+  findById = jest.fn();
+  findByName = jest.fn();
+  createByBlueprint = jest.fn();
+}
+export class EquipmentRepositoryMock implements IEquipmentRepositoryPort {
+  findByName = jest.fn();
+  findAll = jest.fn();
+}
+export class SpellbookRepositoryMock implements ISpellbookRepositoryPort {
+  findSpellAll = jest.fn();
+  findByName = jest.fn();
 }
